@@ -1,0 +1,15 @@
+DrawPokerWX.c
+DrawPokerWX.h
+-I ./../../Learn/Simple Libraries/Custom/libSSD1306
+-L ./../../Learn/Simple Libraries/Custom/libSSD1306
+-I ./../../Learn/Simple Libraries/Custom/libtimer
+-L ./../../Learn/Simple Libraries/Custom/libtimer
+>compiler=C
+>memtype=lmm main ram
+>optimize=-O2
+>-m32bit-doubles
+>-fno-exceptions
+>defs::-std=c99
+>-lm
+>linker::-lSSD1306 -ltimer
+>BOARD::ACTIVITYBOARD
