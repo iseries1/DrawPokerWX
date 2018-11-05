@@ -31,8 +31,8 @@ Full House - 40,
 Straight Flush - 250,
 Royal Flush - 5000.
 
-Winning could be negitive.
+Winnings could be negitive.
 
-Winning could be made to persist....
+Winnings could be made to persist....
 
 Mike
