@@ -21,7 +21,7 @@ Each roll cost 5 points.
 
 Winning are calulated as follows:
 
-Jack or Better - 5,
+Jacks or Better - 5,
 2 Pair - 10,
 3 of a kind - 15,
 Straight - 20,
