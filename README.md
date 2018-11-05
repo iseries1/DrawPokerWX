@@ -19,7 +19,7 @@ Show 5 cards and allow picking which cards to keep and allowing a second roll.
 
 Each roll cost 5 points.
 
-Winning are calulated as follows:
+Winnings are calulated as follows:
 
 Jacks or Better - 5,
 2 Pair - 10,
