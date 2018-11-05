@@ -21,15 +21,15 @@ Each roll cost 5 points.
 
 Winning are calulated as follows:
 
-Jack or Better - 5
-2 Pair - 10
-3 of a kind - 15
-Straight - 20
-Flush - 25
-Full House - 40
-4 of a kind - 125
-Straight Flush - 250
-Royal Flush - 5000
+Jack or Better - 5,
+2 Pair - 10,
+3 of a kind - 15,
+Straight - 20,
+Flush - 25,
+Full House - 40,
+4 of a kind - 125,
+Straight Flush - 250,
+Royal Flush - 5000.
 
 Winning could be negitive.
 
