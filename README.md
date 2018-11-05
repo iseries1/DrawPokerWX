@@ -13,4 +13,26 @@ To display the card is just a mater of converting back each pixel bit in each wo
 
 Next I need to build the logic to allow selecting cards to keep and keep track of the winnings.
 
+Rules are:
+
+Show 5 cards and allow picking which cards to keep and allowing a second roll.
+
+Each roll cost 5 points.
+
+Winning are calulated as follows:
+
+Jack or Better - 5
+2 Pair - 10
+3 of a kind - 15
+Straight - 20
+Flush - 25
+Full House - 40
+4 of a kind - 125
+Straight Flush - 250
+Royal Flush - 5000
+
+Winning could be negitive.
+
+Winning could be made to persist....
+
 Mike
