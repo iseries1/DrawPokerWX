@@ -13,6 +13,10 @@
 void ShowCard(char, char);
 void Display(void *);
 char Buttons(void);
+void ShowPoints(void);
+void ShowHold(void);
+void Input(void);
+
 
 #define RGB_COUNT 4
 #define BTNCL 14
@@ -38,16 +42,19 @@ char Buttons(void);
 #define LLIN 36
 
 unsigned int i;
-char cards[6];
+volatile char cards[6];
+volatile char hold[6];
 char C[6] = {255, 255, 255, 255, 255, 0};
 unsigned long PCNT;
 volatile int Cursor;
-
+char Buffer[25];
+char Hold[][4] = {"   ", "HLD"};
 
 
 int main()
 {
   unsigned int z;
+  
   high(17); // allow code updates
   
   cards[0] = 1;
@@ -55,12 +62,16 @@ int main()
   cards[2] = 32;
   cards[3] = 20;
   cards[4] = 0;
+  hold[0] = 1;
+  Cursor = 0;
   
   cog_run(&Display, 128);
   
   while(1)
   {
-    pause(1000);
+    Input();
+      
+    pause(250);
     
   }  
 }
@@ -91,18 +102,22 @@ void Display(void *par)
         if (i != Cursor)
           i = Cursor;
         SSD1306_drawLine(i * CSPC + 2, LLIN, i * CSPC + 20, LLIN, 1);
-        SSD1306_drawLine(i * CSPC + 2, LLIN + 1, i * CSPC + 20, LLIN + 1, 1);
+        SSD1306_drawLine(i * CSPC + 1, LLIN + 1, i * CSPC + 21, LLIN + 1, 1);
+        SSD1306_drawLine(i * CSPC + 2, LLIN + 2, i * CSPC + 20, LLIN + 2, 1);
       }
       else
       {
         SSD1306_drawLine(i * CSPC + 2, LLIN, i * CSPC + 20, LLIN, 0);
-        SSD1306_drawLine(i * CSPC + 2, LLIN + 1, i * CSPC + 20, LLIN + 1, 0);
-      }        
+        SSD1306_drawLine(i * CSPC + 1, LLIN + 1, i * CSPC + 21, LLIN + 1, 0);
+        SSD1306_drawLine(i * CSPC + 2, LLIN + 2, i * CSPC + 20, LLIN + 2, 0);
+      }
     }
     for (p=0;p<5;p++)
     {
       ShowCard(p, cards[p]);
     }
+    ShowPoints();
+    ShowHold();
     SSD1306_update();
   }    
 }
@@ -164,3 +179,53 @@ char Buttons()
 
   return sBtns;
 }
+
+void ShowPoints()
+{
+  sprinti(Buffer, "Points: %d", 0);
+  SSD1306_writeSStr(26, 56, Buffer);
+}
+
+void ShowHold()
+{
+  int i;
+  
+  for (i=0;i<6;i++)
+  {
+    SSD1306_writeSStr(i * CSPC, 42, Hold[hold[i]]);
+  }
+}
+
+void Input()
+{
+  int i, j;
+  
+  for (i=0;i<5;i++)
+    hold[i] = 0;
+  Cursor = 0;
+  i = 0;
+  
+  while (1)
+  {
+    if (j != Buttons())
+    {
+      j = Buttons();
+      if (j == BLL)
+      {
+        if (--i < 0)
+          i = 4;
+      }
+      if (j == BLC)
+      {
+        hold[Cursor] = 1 - hold[Cursor];
+      }
+      if (j == BLR)
+      {
+        if (++i > 4)
+          i = 0;
+      }
+      Cursor = i;
+    }      
+  }    
+}
+  
