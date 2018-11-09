@@ -16,6 +16,9 @@ char Buttons(void);
 void ShowPoints(void);
 void ShowHold(void);
 void Input(void);
+void Shuffle(void);
+char Deal(void);
+void Draw(void);
 
 
 #define RGB_COUNT 4
@@ -41,7 +44,8 @@ void Input(void);
 #define CSPC 26
 #define LLIN 36
 
-unsigned int i;
+int i;
+char Deck[53];
 volatile char cards[6];
 volatile char hold[6];
 char C[6] = {255, 255, 255, 255, 255, 0};
@@ -49,30 +53,46 @@ unsigned long PCNT;
 volatile int Cursor;
 char Buffer[25];
 char Hold[][4] = {"   ", "HLD"};
+int p;
+int Points;
 
 
 int main()
 {
-  unsigned int z;
   
   high(17); // allow code updates
+
+  // make deck of cards
+  for (i=1;i<53;i++)
+    Deck[i] = i;
   
-  cards[0] = 1;
-  cards[1] = 5;
-  cards[2] = 32;
-  cards[3] = 20;
-  cards[4] = 0;
-  hold[0] = 1;
+  srand(time(NULL));
+
+  Shuffle();
+  
   Cursor = 0;
+  
+  Points = 100;
   
   cog_run(&Display, 128);
   
   while(1)
   {
+    Draw();
+    
     Input();
-      
+    
+    Points -= 5;
+    
+    Draw();
+    
+    // determine winnings...
+    
+    Input();
+              
     pause(250);
     
+    Shuffle();
   }  
 }
 
@@ -182,7 +202,7 @@ char Buttons()
 
 void ShowPoints()
 {
-  sprinti(Buffer, "Points: %d", 0);
+  sprinti(Buffer, "Points: %d  ", Points);
   SSD1306_writeSStr(26, 56, Buffer);
 }
 
@@ -200,8 +220,6 @@ void Input()
 {
   int i, j;
   
-  for (i=0;i<5;i++)
-    hold[i] = 0;
   Cursor = 0;
   i = 0;
   
@@ -224,8 +242,49 @@ void Input()
         if (++i > 4)
           i = 0;
       }
+      if (j == BRC)
+      {
+        while (j == Buttons());
+        return;
+      }        
       Cursor = i;
     }      
+  }    
+}
+
+void Shuffle()
+{
+  int i;
+  int j;
+  char v;
+  
+  for (i=1;i<53;i++)
+  {
+    j = rand() % 52 + 1;
+    v = Deck[j];
+    Deck[j] = Deck[i];
+    Deck[i] = v;
+  }
+  p = 1;    
+}
+
+char Deal()
+{
+  if (p > 52)
+    return 0;
+  return Deck[p++];
+}
+
+void Draw()
+{
+  int i = 0;
+  
+  for (i=0;i<5;i++)
+  {
+    if (hold[i] == 0)
+      cards[i] = Deal();
+    else
+      hold[i] = 0;
   }    
 }
   
