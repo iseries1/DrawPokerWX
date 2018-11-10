@@ -19,7 +19,18 @@ void Input(void);
 void Shuffle(void);
 char Deal(void);
 void Draw(void);
+void Winnings(void);
+char Royal(void);
+char StraightFlush(void);
+char Kind(char);
+char FullHouse(void);
+char Flush(void);
+char Straight(void);
+char Pairs(void);
+char Jacks(void);
 
+#define True 255;
+#define False 0;
 
 #define RGB_COUNT 4
 #define BTNCL 14
@@ -48,12 +59,17 @@ int i;
 char Deck[53];
 volatile char cards[6];
 volatile char hold[6];
+char Suits[6];
+char Faces[6];
 char C[6] = {255, 255, 255, 255, 255, 0};
 unsigned long PCNT;
 volatile int Cursor;
+volatile int Over;
 char Buffer[25];
-char Hold[][4] = {"   ", "HLD"};
-int p;
+char Hold[][5] = {"    ", "HLD "};
+char Win[10][16] = {"  Game Over", "Jacks or Better", "2 Pair", "3 of Kind", "Straight", "Flush", "Full House", "4 of Kind", "Staight Flush", "Royal Flush"};
+int W;
+int Pos;
 int Points;
 
 
@@ -80,13 +96,19 @@ int main()
   {
     Draw();
     
+    Over = 0;
+    
     Input();
     
     Points -= 5;
     
     Draw();
     
-    // determine winnings...
+    Winnings();
+    
+    pause(500);
+    
+    Over = 1;
     
     Input();
               
@@ -98,7 +120,7 @@ int main()
 
 void Display(void *par)
 {
-  int i, l;
+  int i, j, l;
   int p;
   int cnt;
   
@@ -108,7 +130,8 @@ void Display(void *par)
   SSD1306_init(OLED_CLK, OLED_DAT, OLED_CS, OLED_DC, OLED_RST);
   SSD1306_cls();
 
-  i = Cursor;
+  i = Cursor; //Wait to change
+  j = Over; //Wait to change
   l = 0;
   while(1)
   {
@@ -121,15 +144,27 @@ void Display(void *par)
       {
         if (i != Cursor)
           i = Cursor;
-        SSD1306_drawLine(i * CSPC + 2, LLIN, i * CSPC + 20, LLIN, 1);
-        SSD1306_drawLine(i * CSPC + 1, LLIN + 1, i * CSPC + 21, LLIN + 1, 1);
-        SSD1306_drawLine(i * CSPC + 2, LLIN + 2, i * CSPC + 20, LLIN + 2, 1);
+        if (j != Over)
+          j = Over;
+        if (j)
+          SSD1306_writeSStr(5, 42, Win[W]);
+        else
+        {
+          SSD1306_drawLine(i * CSPC + 2, LLIN, i * CSPC + 20, LLIN, 1);
+          SSD1306_drawLine(i * CSPC + 1, LLIN + 1, i * CSPC + 21, LLIN + 1, 1);
+          SSD1306_drawLine(i * CSPC + 2, LLIN + 2, i * CSPC + 20, LLIN + 2, 1);
+        }
       }
       else
       {
-        SSD1306_drawLine(i * CSPC + 2, LLIN, i * CSPC + 20, LLIN, 0);
-        SSD1306_drawLine(i * CSPC + 1, LLIN + 1, i * CSPC + 21, LLIN + 1, 0);
-        SSD1306_drawLine(i * CSPC + 2, LLIN + 2, i * CSPC + 20, LLIN + 2, 0);
+        if (j)
+          SSD1306_writeSStr(5, 42, "                ");
+        else
+        {
+          SSD1306_drawLine(i * CSPC + 2, LLIN, i * CSPC + 20, LLIN, 0);
+          SSD1306_drawLine(i * CSPC + 1, LLIN + 1, i * CSPC + 21, LLIN + 1, 0);
+          SSD1306_drawLine(i * CSPC + 2, LLIN + 2, i * CSPC + 20, LLIN + 2, 0);
+        }
       }
     }
     for (p=0;p<5;p++)
@@ -137,7 +172,8 @@ void Display(void *par)
       ShowCard(p, cards[p]);
     }
     ShowPoints();
-    ShowHold();
+    if (!j)
+      ShowHold();
     SSD1306_update();
   }    
 }
@@ -265,14 +301,14 @@ void Shuffle()
     Deck[j] = Deck[i];
     Deck[i] = v;
   }
-  p = 1;    
+  Pos = 1;    
 }
 
 char Deal()
 {
-  if (p > 52)
+  if (Pos > 52)
     return 0;
-  return Deck[p++];
+  return Deck[Pos++];
 }
 
 void Draw()
@@ -287,4 +323,220 @@ void Draw()
       hold[i] = 0;
   }    
 }
+
+void Winnings()
+{
+  int i;
   
+  for (i=0;i<5;i++)
+  {
+    Suits[i] = (cards[i] - 1) % 4;
+    Faces[i] = (cards[i] - 1) / 4;
+    if (Faces[i] == 0)
+      Faces[i] = 13;
+//    printi("%d (%d/%d)\n", cards[i], Suits[i], Faces[i]);
+  }
+//  printi("\n");
+  W = 0;
+  
+  if (Royal())
+  {
+    Points += 5000;
+    W = 9;
+    return;
+  }
+  
+  if (StraightFlush())
+  {
+    Points += 250;
+    W = 8;
+    return;
+  }
+  
+  if (Kind(4))
+  {
+    Points += 125;
+    W = 7;
+    return;
+  }
+  
+  if (FullHouse())
+  {
+    Points += 40;
+    W = 6;
+    return;
+  }
+  
+  if (Flush())
+  {
+    Points += 25;
+    W = 5;
+    return;
+  }
+  
+  if (Straight())
+  {
+    Points += 20;
+    W = 4;
+    return;
+  }
+  
+  if (Kind(3))
+  {
+    Points += 15;
+    W = 3;
+    return;
+  }
+  
+  if (Pairs())
+  {
+    Points += 10;
+    W = 2;
+    return;
+  }
+  
+  if (Jacks())
+  {
+    Points += 5;
+    W = 1;
+    return;
+  }                                    
+      
+}
+  
+char Royal()
+{
+  int i;
+  
+  if (StraightFlush())
+  {
+    for (i=0;i<5;i++)
+      if (Faces[i] == 13)
+        return True;
+  }
+  return False;
+}
+
+char StraightFlush()
+{
+  if (Straight())
+    if (Flush())
+      return True;
+  return False;
+}
+
+char Kind(char k)
+{
+  int i, j;
+  int y = 0;
+  
+  for (i=0;i<2;i++)
+  {
+    y = 0;
+    for (j=i;j<5;j++)
+      if (Faces[i] == Faces[j])
+        y++;
+    if (y == k)
+      return True;
+  }
+  return False;
+}
+
+char FullHouse()
+{
+  int i;
+  int x = 0;
+  int y = 0;
+  int j = 0;
+  
+  for (i=0;i<5;i++)
+  {
+    if (Faces[4] == Faces[i])
+      y++;
+    else
+      j = Faces[i];
+  }
+  
+  if ((y != 3) || (y != 2))
+    return False;
+    
+  for (i=0;i<4;i++)
+    if (Faces[i] == j)
+      x++;
+  
+  if ((y == 3) && (x == 2))
+    return True;
+  if ((y == 2) && (x == 3))
+    return True;
+  
+  return False;
+}
+
+char Flush()
+{
+  int i;
+  
+  for (i=0;i<4;i++)
+    if (Suits[i] != Suits[4])
+      return False;
+  return True;
+}    
+
+char Straight()
+{
+  int i, j;
+  char u;
+  int y = 13;
+  
+  for (i=0;i<5;i++)
+    if (Faces[i] < y)
+      y = Faces[i];
+  
+  for (j=0;j<4;j++)
+  {
+    y++;
+    u = False;
+    for (i=0;i<5;i++)
+      if (Faces[i] == y)
+        u = True;
+    
+    if (!u)
+      return u;
+  }
+  return True;
+}
+
+char Pairs()
+{
+  int i,j;
+  int y = 0;
+  
+  for (i=0;i<4;i++)
+  {
+    for (j=i + 1;j<5;j++)
+      if (Faces[i] == Faces[j])
+        y++;
+  }
+  if (y == 2)
+    return True;
+  return False;
+}
+
+char Jacks()
+{
+  int i,j;
+  int y;
+  
+  for (i=0;i<5;i++)
+  {
+    y = 0;
+    for (j=i;j<5;j++)
+      if (Faces[i] == Faces[j])
+        if (Faces[i] > 9)
+          y++;
+    
+    if (y == 2)
+      return True;
+  }
+  return False;
+}
