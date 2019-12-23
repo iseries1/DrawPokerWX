@@ -66,6 +66,7 @@ unsigned long PCNT;
 volatile int Cursor;
 volatile int Over;
 char Buffer[25];
+int WV[] = {0, 5, 10, 15, 20, 25, 40, 125, 250, 5000};
 char Hold[][5] = {"    ", "HLD "};
 char Win[10][16] = {"  Game Over", "Jacks or Better", "2 Pair", "3 of Kind", "Straight", "Flush", "Full House", "4 of Kind", "Staight Flush", "Royal Flush"};
 int W;
@@ -105,6 +106,8 @@ int main()
     Draw();
     
     Winnings();
+    
+    Points += WV[W];
     
     pause(500);
     
@@ -239,7 +242,12 @@ char Buttons()
 void ShowPoints()
 {
   sprinti(Buffer, "Points: %d  ", Points);
-  SSD1306_writeSStr(26, 56, Buffer);
+  SSD1306_writeSStr(0, 56, Buffer);
+  sprinti(Buffer, "+%d ", WV[W]);
+  if (W > 0)
+    SSD1306_writeSStr(100, 56, Buffer);
+  else
+    SSD1306_writeSStr(90, 56, "    ");
 }
 
 void ShowHold()
@@ -337,71 +345,44 @@ void Winnings()
 //    printi("%d (%d/%d)\n", cards[i], Suits[i], Faces[i]);
   }
 //  printi("\n");
-  W = 0;
+  W = 9;
   
   if (Royal())
-  {
-    Points += 5000;
-    W = 9;
     return;
-  }
-  
+
+  W--;
   if (StraightFlush())
-  {
-    Points += 250;
-    W = 8;
     return;
-  }
-  
+
+  W--;
   if (Kind(4))
-  {
-    Points += 125;
-    W = 7;
     return;
-  }
-  
+
+  W--;
   if (FullHouse())
-  {
-    Points += 40;
-    W = 6;
     return;
-  }
-  
+
+  W--;
   if (Flush())
-  {
-    Points += 25;
-    W = 5;
     return;
-  }
-  
+
+  W--;
   if (Straight())
-  {
-    Points += 20;
-    W = 4;
     return;
-  }
-  
+
+  W--;
   if (Kind(3))
-  {
-    Points += 15;
-    W = 3;
     return;
-  }
-  
+
+  W--;
   if (Pairs())
-  {
-    Points += 10;
-    W = 2;
     return;
-  }
-  
+
+  W--;
   if (Jacks())
-  {
-    Points += 5;
-    W = 1;
     return;
-  }                                    
-      
+
+  W--;      
 }
   
 char Royal()
@@ -430,7 +411,7 @@ char Kind(char k)
   int i, j;
   int y = 0;
   
-  for (i=0;i<2;i++)
+  for (i=0;i<3;i++)
   {
     y = 0;
     for (j=i;j<5;j++)
@@ -445,7 +426,6 @@ char Kind(char k)
 char FullHouse()
 {
   int i;
-  int x = 0;
   int y = 0;
   int j = 0;
   
@@ -457,16 +437,14 @@ char FullHouse()
       j = Faces[i];
   }
   
-  if ((y != 3) || (y != 2))
+  if (y < 2)
     return False;
     
-  for (i=0;i<4;i++)
+  for (i=0;i<5;i++)
     if (Faces[i] == j)
-      x++;
+      y++;
   
-  if ((y == 3) && (x == 2))
-    return True;
-  if ((y == 2) && (x == 3))
+  if (y == 5)
     return True;
   
   return False;
@@ -486,24 +464,33 @@ char Straight()
 {
   int i, j;
   char u;
-  int y = 13;
+  int y = 0;
+  
+  // create binary
+  for (i=0;i<5;i++)
+    y = y | (1 << Faces[i]);
+
+  while ((y & 1) == 0)
+    y = y >> 1;
+  
+  if (y == 0x1f)
+    return True;
+  
+  y = 0;
   
   for (i=0;i<5;i++)
-    if (Faces[i] < y)
-      y = Faces[i];
+    if (Faces[i] == 13)
+      y = y | 1;
+    else
+      y = y | (1 << Faces[i]);
   
-  for (j=0;j<4;j++)
-  {
-    y++;
-    u = False;
-    for (i=0;i<5;i++)
-      if (Faces[i] == y)
-        u = True;
-    
-    if (!u)
-      return u;
-  }
-  return True;
+  while ((y & 1) == 0)
+    y = y >> 1;
+  
+  if (y == 0x1f)
+    return True;
+   
+   return False;
 }
 
 char Pairs()
